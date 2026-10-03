@@ -42,11 +42,18 @@ jobs:
         run: |
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+      - name: Generate classic .sln for SonarScanner (slnx not yet supported)
+        shell: powershell
+        run: |
+          dotnet new sln -o sample -n NimblePros.SampleToDo.ci --format sln
+          dotnet sln sample/NimblePros.SampleToDo.ci.sln add `
+            sample/src/NimblePros.SampleToDo.Core/NimblePros.SampleToDo.Core.csproj `
+            sample/src/NimblePros.SampleToDo.AspireHost/NimblePros.SampleToDo.AspireHost.csproj
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"AdamCoronado_CleanArchitectureC" /o:"adamcoronado" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-          dotnet build sample/NimblePros.SampleToDo.slnx
+          dotnet build sample/NimblePros.SampleToDo.ci.sln
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
